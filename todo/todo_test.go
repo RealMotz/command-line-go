@@ -19,8 +19,8 @@ func TestAdd(t *testing.T) {
 func TestComplete(t *testing.T) {
 	l := List{}
 
-	task := "New Task"
-	l.Add(task)
+	l.Add("New Task 1")
+	l.Add("New Task 2")
 	l.Complete(1)
 
 	if !l[0].Done {

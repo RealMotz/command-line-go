@@ -3,7 +3,9 @@ package todo
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"slices"
 	"time"
 )
 
@@ -15,6 +17,10 @@ type item struct {
 }
 
 type List []item
+
+func (l *List) String() string {
+	return l.ToString(false)
+}
 
 func (l *List) Add(task string) {
 	t := item{
@@ -33,8 +39,8 @@ func (l *List) Complete(index int) error {
 		return errors.New("invalid index")
 	}
 
-	list[len(list)-1].Done = true
-	list[len(list)-1].CompletedAt = time.Now()
+	list[index-1].Done = true
+	list[index-1].CompletedAt = time.Now()
 
 	return nil
 }
@@ -45,7 +51,7 @@ func (l *List) Delete(index int) error {
 		return errors.New("invalid index")
 	}
 
-	*l = append(list[:index-1], list[index:]...)
+	*l = slices.Delete(list, index-1, index)
 
 	return nil
 }
@@ -74,4 +80,26 @@ func (l *List) Get(filename string) error {
 	}
 
 	return json.Unmarshal(data, l)
+}
+
+func (l *List) ToString(verbose bool) string {
+	formatted := ""
+
+	for k, t := range *l {
+		prefix := " "
+		suffix := ""
+		if t.Done {
+			prefix = "X"
+			suffix = t.CompletedAt.String()
+		}
+
+		if verbose {
+			formatted += fmt.Sprintf("[%s] %d: %s %s (%s)\n", prefix, k+1, t.Task, t.CreateAt.String(), suffix)
+		} else {
+			// Adjust the item number k to print numbers starting from 1 instead of 0
+			formatted += fmt.Sprintf("%s%d: %s\n", prefix, k+1, t.Task)
+		}
+	}
+
+	return formatted
 }
