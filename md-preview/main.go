@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -31,23 +32,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(*filename); err != nil {
+	if err := run(*filename, os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(filename string) error {
-	content, err := os.ReadFile(filename)
+func run(file string, out io.Writer) error {
+	content, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
 
 	html := parseContent(content)
 
-	output := fmt.Sprintf("%s.html", filepath.Base(filename))
+	temp, err := os.CreateTemp(filepath.Dir(file), "mdp*.html")
+	if err != nil {
+		fmt.Println("Error creating a temp file")
+		return err
+	}
+	defer temp.Close()
 
-	return os.WriteFile(output, html, 0644)
+	fmt.Fprintln(out, temp.Name())
+
+	return os.WriteFile(temp.Name(), html, 0644)
 }
 
 func parseContent(input []byte) []byte {
